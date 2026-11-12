@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>텀블러 공장 제조품질관리</title>
+    <style>
+      body {
+        margin: 0;
+        color: #24372d;
+        font-family: Arial, sans-serif;
+      }
+
+      .app-header {
+        display: flex;
+        min-height: 76px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        padding: 12px 32px;
+        border-bottom: 1px solid #dce8df;
+      }
+
+      .yellow-notice {
+        margin: 20px 32px 0;
+        padding: 14px 18px;
+        border: 1px solid #e9d27a;
+        border-radius: 8px;
+        background: #fff6c9;
+        color: #5b4a14;
+        line-height: 1.5;
+      }
+
+      .brand-link,
+      .header-actions,
+      .header-nav {
+        display: flex;
+        align-items: center;
+      }
+
+      .brand-link {
+        gap: 12px;
+        color: #214c38;
+        font-size: 20px;
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .brand-link img {
+        width: 48px;
+        height: 48px;
+      }
+
+      .header-actions {
+        gap: 20px;
+      }
+
+      .header-nav {
+        gap: 20px;
+      }
+
+      .header-nav a {
+        color: #276447;
+        font-weight: 650;
+      }
+
+      .header-user {
+        color: #40584d;
+        white-space: nowrap;
+      }
+
+      button {
+        padding: 10px 16px;
+        border: 0;
+        border-radius: 6px;
+        background: #39785a;
+        color: white;
+        cursor: pointer;
+        font-size: 16px;
+      }
+
+      .logout-button {
+        background: #64766b;
+      }
+
+      main {
+        padding: 32px;
+      }
+
+      .app-footer {
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        padding: 20px 32px;
+        border-top: 1px solid #dce8df;
+        color: #52645a;
+        text-align: center;
+      }
+
+      #login-form {
+        display: grid;
+        max-width: 420px;
+        gap: 12px;
+        margin: 32px auto;
+      }
+
+      #login-form h1 {
+        margin-top: 0;
+      }
+
+      input {
+        box-sizing: border-box;
+        width: 100%;
+        padding: 10px;
+        font-size: 16px;
+      }
+
+      #login-error {
+        margin: 0;
+        color: #b42318;
+      }
+
+      #not-found-view p {
+        margin-bottom: 16px;
+      }
+
+      .home-link {
+        display: inline-block;
+        padding: 10px 16px;
+        border-radius: 6px;
+        background: #39785a;
+        color: white;
+        text-decoration: none;
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="app-header">
+      <a class="brand-link" href="/" data-link aria-label="텀블러 공장 제조품질관리 홈">
+        <img src="/logo.svg" alt="" />
+        <span>텀블러 공장 제조품질관리</span>
+      </a>
+      <div id="header-actions" class="header-actions" hidden>
+        <nav class="header-nav" aria-label="주요 메뉴">
+          <a href="/settings" data-link>설정</a>
+          <span id="header-user" class="header-user"></span>
+        </nav>
+        <button class="logout-button" type="button">로그아웃</button>
+      </div>
+    </header>
+    <aside id="yellow-notice" class="yellow-notice" hidden>
+      AI 분석 결과는 보조 자료이며 품질 담당자의 확인이 필요합니다. 최종 출하 승인은 현장 기준에 따라 별도로 진행하세요.
+    </aside>
+    <main>
+      <form id="login-form">
+        <h1>텀블러 공장 제조품질관리</h1>
+        <label for="username">계정</label>
+        <input id="username" name="username" type="text" value="writer" autocomplete="username" required />
+        <label for="password">비밀번호</label>
+        <input id="password" name="password" type="password" value="writer1234!" autocomplete="current-password" required />
+        <button type="submit">로그인</button>
+        <p id="login-error" role="alert" hidden></p>
+      </form>
+      <section id="signed-in" hidden>
+        <section id="app-screen" hidden>
+          <h1 id="screen-title">품질 현황</h1>
+          <section id="not-found-view" hidden>
+            <p>페이지를 찾을 수 없습니다</p>
+            <a href="/" id="home-link" class="home-link" data-link>홈으로 가기</a>
+          </section>
+        </section>
+      </section>
+    </main>
+    <footer id="app-footer" class="app-footer" hidden>
+      텀블러 공장 품질관리 시스템입니다.
+    </footer>
+    <script>
+      const form = document.querySelector('#login-form');
+      const signedIn = document.querySelector('#signed-in');
+      const appScreen = document.querySelector('#app-screen');
+      const screenTitle = document.querySelector('#screen-title');
+      const notFoundView = document.querySelector('#not-found-view');
+      const homeLink = document.querySelector('#home-link');
+      const errorMessage = document.querySelector('#login-error');
+      const headerActions = document.querySelector('#header-actions');
+      const headerUser = document.querySelector('#header-user');
+      const logoutButton = document.querySelector('.logout-button');
+      const yellowNotice = document.querySelector('#yellow-notice');
+      const appFooter = document.querySelector('#app-footer');
+      const roleLabels = {
+        writer: '작성자',
+        reviewer: '검토자',
+        'factory-user': '품질관리',
+      };
+
+      function showSignedIn(user) {
+        const isSignedIn = Boolean(user);
+        form.hidden = isSignedIn;
+        signedIn.hidden = !isSignedIn;
+        appScreen.hidden = !isSignedIn;
+        headerActions.hidden = !isSignedIn;
+        yellowNotice.hidden = !isSignedIn;
+        appFooter.hidden = !isSignedIn;
+        headerUser.textContent = isSignedIn
+          ? `${user.username} (${roleLabels[user.role] || user.role})`
+          : '';
+
+        if (isSignedIn) {
+          renderScreen();
+        }
+      }
+
+      function renderScreen() {
+        const route = window.location.pathname;
+        let title = '품질 현황';
+
+        if (route === '/inspections/new') {
+          title = '검사 등록';
+        } else if (/^\/inspections\/[^/]+$/.test(route)) {
+          title = '검사 상세';
+        } else if (route === '/settings') {
+          title = '설정';
+        } else if (route !== '/') {
+          screenTitle.hidden = true;
+          notFoundView.hidden = false;
+          return;
+        }
+
+        screenTitle.textContent = title;
+        screenTitle.hidden = false;
+        notFoundView.hidden = true;
+      }
+
+      function navigate(path) {
+        if (window.location.pathname === path) {
+          renderScreen();
+          return;
+        }
+
+        window.history.pushState({}, '', path);
+        renderScreen();
+      }
+
+      document.querySelectorAll('a[data-link]').forEach((link) => {
+        link.addEventListener('click', (event) => {
+          if (
+            event.button !== 0 ||
+            event.metaKey ||
+            event.ctrlKey ||
+            event.shiftKey ||
+            event.altKey
+          ) {
+            return;
+          }
+
+          event.preventDefault();
+          navigate(link.getAttribute('href'));
+        });
+      });
+
+      window.addEventListener('popstate', renderScreen);
+
+      async function checkSession() {
+        try {
+          const response = await fetch('/api/session');
+          const result = await response.json();
+          showSignedIn(result.user);
+        } catch {
+          showSignedIn(null);
+          errorMessage.textContent = '서버에 연결할 수 없습니다.';
+          errorMessage.hidden = false;
+        }
+      }
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        errorMessage.hidden = true;
+        errorMessage.textContent = '';
+
+        try {
+          const response = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              username: form.elements.username.value,
+              password: form.elements.password.value,
+            }),
+          });
+          const result = await response.json();
+
+          if (result.error) {
+            errorMessage.textContent = result.error;
+            errorMessage.hidden = false;
+            return;
+          }
+
+          showSignedIn(result.user);
+        } catch {
+          errorMessage.textContent = '서버에 연결할 수 없습니다.';
+          errorMessage.hidden = false;
+        }
+      });
+
+      logoutButton.addEventListener('click', async () => {
+        logoutButton.disabled = true;
+        try {
+          const response = await fetch('/api/logout', { method: 'POST' });
+          const result = await response.json();
+          if (!response.ok || result.error) {
+            throw new Error(result.error || '로그아웃하지 못했습니다.');
+          }
+
+          form.reset();
+          errorMessage.textContent = '';
+          errorMessage.hidden = true;
+          showSignedIn(null);
+        } catch (error) {
+          errorMessage.textContent = error.message || '로그아웃하지 못했습니다.';
+          errorMessage.hidden = false;
+          form.hidden = false;
+        } finally {
+          logoutButton.disabled = false;
+        }
+      });
+
+      homeLink.addEventListener('click', (event) => {
+        event.preventDefault();
+        navigate('/');
+      });
+
+      void checkSession();
+    </script>
+  </body>
+</html>
